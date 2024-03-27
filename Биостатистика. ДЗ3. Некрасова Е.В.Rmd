@@ -1,0 +1,137 @@
+---
+title: "Биостатистика. ДЗ3. Некрасова Е.В."
+output: html_document
+date: "2024-03-23"
+---
+# Загружаем библиотеки
+```{r}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+```
+
+# Загругружаем датасет pima и проверяем доступ к данным
+```{r}
+pima <- read_excel(path = "C:/Users/UserHome/Desktop/Биостатистика/ДЗ 3/pima.xlsx", sheet = "pima")
+head(pima, 7)
+```
+
+# 1. Рассчитываем описательные статистики для переменных glucose, pressure, mass.
+## Для количественной переменной рассчитываем число наблюдений, среднее, стандартное отклонение, 1-й и 3-й квартили, минимум и максимум. Для категориальной переменной определяем абсолютную и относительные частоты.
+### glucose - количественная переменная
+```{r}
+pima %>%
+  summarise(
+    glucose_obs = n(),
+    glucose_mean = mean(glucose, na.rm = TRUE),
+    glucose_sd = sd(glucose, na.rm = TRUE),
+    glucose_quantile_1 = quantile(glucose, 0.25, na.rm = TRUE),
+    glucose_quantile_3 = quantile(glucose, 0.75, na.rm = TRUE),
+    glucose_min = min(glucose, na.rm = TRUE),
+    glucose_max = max(glucose, na.rm = TRUE)
+  )
+```
+### pressure - количественная переменная
+```{r}  
+pima %>%
+  summarise(
+    pressure_obs = n(),
+    pressure_mean = mean(pressure, na.rm = TRUE),
+    pressure_sd = sd(pressure, na.rm = TRUE),
+    pressure_quantile_1 = quantile(pressure, 0.25, na.rm = TRUE),
+    pressure_quantile_3 = quantile(pressure, 0.75, na.rm = TRUE),
+    pressure_min = min(pressure, na.rm = TRUE),
+    pressure_max = max(pressure, na.rm = TRUE)
+  )
+```
+
+### mass - количественная переменная
+```{r}
+pima %>%
+  summarise(
+    mass_obs = n(),
+    mass_mean = mean(mass, na.rm = TRUE),
+    mass_sd = sd(mass, na.rm = TRUE),
+    mass_quantile_1 = quantile(mass, 0.25, na.rm = TRUE),
+    mass_quantile_3 = quantile(mass, 0.75, na.rm = TRUE),
+    mass_min = min(mass, na.rm = TRUE),
+    mass_max = max(mass, na.rm = TRUE)
+  )
+```
+
+# 2. Рассчитываем описательную статистику для переменной diabetes. Создаем на основе переменной age новую переменную age_group, которая будет отражать следующие возрастные группы: 21–35, 36–49 и 50+. Посчитаем описательную статистику для новой переменной.
+## Для количественной переменной рассчитываем число наблюдений, среднее, стандартное отклонение, 1-й и 3-й квартили, минимум и максимум. Для категориальной переменной определяем абсолютную и относительные частоты.
+### diabetes - категориальная переменная
+```{r stat factor, include=TRUE}
+absolute_frequencies <- table(pima$diabetes)
+relative_frequencies <- prop.table(table(pima$diabetes))
+absolute_frequencies # выводим результат
+relative_frequencies # выводим результат
+```
+### Создаем новую переменную age_group
+```{r}
+pima <- pima %>%
+  mutate(age_group = ifelse(age <= 35, "21-35",
+  ifelse(age <= 49, "36-49", "50+")))
+
+pima <- mutate(pima, age_group = as.factor(age_group))
+```
+
+### Посчитаем описательную статистику для новой переменной
+```{r}
+absolute_age <- table(pima$age_group)
+relative_age <- prop.table(table(pima$age_group))
+absolute_age # выводим результат
+relative_age # выводим результат
+```
+
+# 3. Определяем 90% доверительный интервал для переменной pedigree
+```{r}
+t.test(pima$pedigree, conf.level = 0.90)$conf.int
+```
+
+# 4. Построим график плотности вероятности для переменной glucose и отметим на нем среднее значение. Для той же переменной построим гистограмму. Построим два ящика с усами для значений pos и neg соответственно переменной diabetes. 
+## График плотности вероятноти для переменной glucose
+```{r}
+ggplot(data = pima, aes(x = glucose)) +
+  geom_density() +
+  geom_vline(aes(xintercept = mean(glucose)), color = "red", linetype = "dashed") +
+  labs(title = "Плотность вероятности для переменной glucose",
+       x = "Значение glucose",
+       y = "Плотность вероятности") +
+  theme_minimal()
+```
+
+## Гистограмма для переменной glucose
+```{r}
+ggplot(data = pima, aes(x = glucose)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black", aes(y = ..density..)) +
+  labs(title = "Гистограмма плотности вероятности переменной glucose",
+       x = "Значение glucose",
+       y = "Плотность вероятности") +
+  theme_minimal()
+```
+
+## Два ящика с усами для значений pos и neg соответственно переменной diabetes.
+
+```{r}
+ggplot(data = pima, aes(x = diabetes, y = glucose, fill = diabetes)) +
+  geom_boxplot() +
+  labs(title = "Ящики с усами для переменной diabetes",
+       x = "Diabetes",
+       y = "Значение glucose") +
+  theme_minimal()
+```
+
+# 5. Построим на одном графике две диаграммы рассеяния для наличия или отсутствия диабета. По оси X представим значения обхвата трицепса, а по оси Y — массу тела. Выполним окрашивание, заливку и группирование по переменной diabetes.
+```{r}
+ggplot(data = pima, aes(x = triceps, y = mass, color = diabetes, fill = diabetes)) +
+  geom_point(shape = 21, size = 3) +
+  labs(title = "Диаграммы рассеяния для наличия или отсутствия диабета",
+       x = "Обхват трицепса",
+       y = "Масса тела") +
+  facet_grid(.~diabetes) +
+  scale_color_manual(values = c("neg" = "blue", "pos" = "red")) +  # Задаем цвета для каждой группы
+  scale_fill_manual(values = c("neg" = "lightblue", "pos" = "pink")) +  # Задаем цвета заливки для каждой группы
+  theme_minimal()
+```
