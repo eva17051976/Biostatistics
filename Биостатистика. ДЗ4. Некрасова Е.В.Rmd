@@ -70,7 +70,10 @@ alpha <- 0.05
 ## Выбираем статистический тест
 Мы можем использовать одновыборочный t-тест, так как мы сравниваем средние значения одной группы до и после вмешательства.Также предполагается, что данные распределены нормально.
 Кроме того, размер выборки небольшой (меньше 30), что также подходит для использования t-теста. Поэтому мы будем использовать t-тест для проверки гипотезы.
-
+```{r}
+t_test_result <- t.test(pressure_after_medication, mu = mean(pressure_before_medication), alternative = "less")
+print(t_test_result)
+```
 ## Определяем наблюдаемое значение статистики
 ```{r}
 observed_statistic <- (mean_pressure_before - mean_pressure_after) / (sd(pressure_before_medication) / sqrt(sample_size))
